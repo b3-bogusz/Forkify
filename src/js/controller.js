@@ -1,7 +1,7 @@
 import * as model from './model.js'
 import recipeView from './views/recipeView';
 import searchView from './views/searchView';
-import resultView from './views/resultsView';
+import resultsView from './views/resultsView';
 import paginationView from './views/paginationView';
 
 import 'core-js/stable';                //npm package for polyfilling
@@ -21,6 +21,9 @@ const controlRecipes = async function() {
     if (!id) return;
     recipeView.renderSpinner();
 
+    // Update results view to mark selected search result
+    resultsView.update(model.getSearchResultsPage());
+
     // 1) Loading recipe
     await model.loadRecipe(id);
 
@@ -34,7 +37,7 @@ const controlRecipes = async function() {
 
 const controlSearchResults = async function() {
   try {
-    resultView.renderSpinner();
+    resultsView.renderSpinner();
 
     // Get search query
     const query = searchView.getQuery();
@@ -44,7 +47,7 @@ const controlSearchResults = async function() {
     await model.loadSearchResults(query);
 
     // Render results
-    resultView.render(model.getSearchResultsPage());
+    resultsView.render(model.getSearchResultsPage());
 
     // Render initial pagination buttons
     paginationView.render(model.state.search);
@@ -56,14 +59,23 @@ const controlSearchResults = async function() {
 
 const controlPagination = function(goToPage) {
   // Render new results
-  resultView.render(model.getSearchResultsPage(goToPage));
+  resultsView.render(model.getSearchResultsPage(goToPage));
 
   // Render new pagination buttons
   paginationView.render(model.state.search);
 }
 
+const controlServings = function(newServings) {
+  // update recipe servings (in state)
+  model.updateServings(newServings);
+  // update the recipe view
+  // recipeView.render(model.state.recipe);
+  recipeView.update(model.state.recipe);
+}
+
 const init = function() {
   recipeView.addHandlerRender(controlRecipes);
+  recipeView.addHandlerUpdateServings(controlServings);
   searchView.addHandlerSearch(controlSearchResults);
   paginationView.adddHandlerClick(controlPagination);
 }
